@@ -1,0 +1,26 @@
+:root{
+    --white: rgb(255, 252, 242);
+    --lightgrey: rgb(204, 197, 185);
+    --darkgrey: rgb(64, 61, 57);
+    --black: rgb(37, 36, 34);
+    --orange: rgb(235, 94, 40);
+}
+
+
+h1{
+    color: var(--orange);
+    text-align: center;
+  }
+  .random_number{
+    margin: 50px;
+    font-size: 150px;
+    text-align: center;
+  }
+  button{
+    display: block;
+    margin: 0 auto;
+  }
+  
+  body{
+     background-color: var(--black); 
+  }
