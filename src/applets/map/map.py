@@ -6,6 +6,85 @@ import math
 import json
 import sys
 
+def getTextboxSize(text, font, fontsize, padding):
+    #Split text into lines
+    lines = text.splitlines()
+
+    #Font
+    font = pygame.font.SysFont(font, fontsize)
+
+    #Text Lines
+    textLines = []
+
+    for i in range(0, len(lines)):
+        textSurface = font.render(lines[i], True, (0,0,0))
+        textRect = textSurface.get_rect()
+        textLines.append([textSurface, textRect])
+
+    #Calculate longest surface
+    longestSurface = 0
+    for surface in textLines:
+        if surface[1].width > longestSurface:
+            longestSurface = surface[1].width
+    
+    #Calculate height of all surfaces
+    totalHeight = 0
+    for surface in textLines:
+        totalHeight += surface[1].height
+
+    #Return size of the box
+    return (longestSurface + (padding * 2), totalHeight + (padding * 2))
+
+def getTextDisplay(text, topLeftPos, font, fontsize, backgroundColor, borderColor, borderWidth, textColor, padding):
+
+    textBoxSize = getTextboxSize(text, font, fontsize, padding)
+
+    #See if the box is off the screen
+    if topLeftPos[0] + textBoxSize[0] > width:
+        topLeftPos = (width - textBoxSize[0], topLeftPos[1])
+    if topLeftPos[1] + textBoxSize[1] > height:
+        topLeftPos = (topLeftPos[0], height - textBoxSize[1])
+
+    #Draw background centered on centerPos
+    backgroundRect = pygame.Rect(0, 0, textBoxSize[0], textBoxSize[1])
+    backgroundRect.topleft = topLeftPos
+    pygame.draw.rect(screen, backgroundColor, backgroundRect, 0, border_radius=15)
+
+    #Draw border
+    borderRect = pygame.Rect(0, 0, textBoxSize[0], textBoxSize[1])
+    borderRect.topleft = topLeftPos
+    pygame.draw.rect(screen, borderColor, borderRect, borderWidth, border_radius=15)
+
+    #Split text into lines
+    lines = text.splitlines()
+
+    #Font
+    font = pygame.font.SysFont(font, fontsize)
+
+    #Text Lines
+    textLines = []
+    for i in range(0, len(lines)):
+        textSurface = font.render(lines[i], True, textColor)
+        textRect = textSurface.get_rect()
+        textLines.append([textSurface, textRect])
+
+    #Draw text
+    yOffset = padding
+    for surface in textLines:
+        surface[1].topleft = (topLeftPos[0] + padding, topLeftPos[1] + yOffset)
+        screen.blit(surface[0], surface[1])
+        yOffset += surface[1].height
+
+
+def formatWaypoint(waypoint):
+    #Replate _ with space
+    waypoint = waypoint.replace("_", " ")
+    #Lowercase
+    waypoint = waypoint.lower()
+    #Capitalize words
+    waypoint = waypoint.title()
+
+    return waypoint
 
 mapData = {}
 
@@ -48,12 +127,15 @@ def setTile(x, y, data):
 
 #Put all tiles in the map data into the mapTiles dictionary
 for system in mapData:
+    
     systemName = system["symbol"]
     systemX = int(system["x"])
     systemY = int(system["y"])
     systemType = system["type"]
 
-    mapTiles[(systemX, systemY)] = [systemName, systemType]
+    #Add the system to the map
+    mapTiles[(systemX, systemY)] = []
+    mapTiles[(systemX, systemY)].append([systemName, systemType])
 
     waypoints = system["waypoints"]
 
@@ -62,7 +144,13 @@ for system in mapData:
         waypointY = systemY + int(waypoint["y"])
         waypointName = waypoint["symbol"]
         waypointType = waypoint["type"]
-        mapTiles[(waypointX, waypointY)] = [waypointName, waypointType]
+        
+        if (waypointX, waypointY) in mapTiles:
+            mapTiles[(waypointX, waypointY)].append([waypointName, waypointType])
+        else:
+            mapTiles[(waypointX, waypointY)] = []
+            mapTiles[(waypointX, waypointY)].append([waypointName, waypointType])
+        
 
 
 def checkIfTileIsVisible(x,y):
@@ -92,9 +180,6 @@ if(len(sys.argv) == 2):
             userXOffset = -int(mapData[i]['x'])
             userYOffset = int(mapData[i]['y'])
             break
-
-
-print("Map Open")
 
 # Set up the game loop
 running = True
@@ -164,11 +249,50 @@ while running:
 
     #check if the mouse is hovering over a tile and display the info near the mouse
     if mouseTile in mapTiles:
-        systemNameDisplay = pygame.font.SysFont("Arial", 16).render(str(mouseTile) + " " + mapTiles[mouseTile][0], True, pallette.white)
-        systemTypeDisplay = pygame.font.SysFont("Arial", 16).render(str(mouseTile) + " " + mapTiles[mouseTile][1], True, pallette.white)
+        
+        #Generate string to display
+        text = ""
 
-        screen.blit(systemNameDisplay, (mousePos[0] + 10, mousePos[1] + 40))
-        screen.blit(systemTypeDisplay, (mousePos[0] + 10, mousePos[1] + 10))
+        #Add the system Position
+        text += "Position: (" + str(mouseTile[0]) + ", " + str(mouseTile[1]) + ")\n"
+
+        #Add the system sector
+        sectorName = mapTiles[mouseTile][0][0].split("-")[0]
+        text += "Sector: " + sectorName + "\n"
+
+        #Add the system name
+        systemName = mapTiles[mouseTile][0][0].split("-")[1]
+        text += "System: " + systemName + "\n"
+
+        text += "Waypoints:\n"
+
+        #Check for multiple waypoints
+        if len(mapTiles[mouseTile]) > 1:
+            for i in range(0, len(mapTiles[mouseTile])):
+                text += formatWaypoint(mapTiles[mouseTile][i][1]) + " ID: " + mapTiles[mouseTile][i][0].split("-")[2] + "\n"
+        else:
+            text += formatWaypoint(mapTiles[mouseTile][0][1]) + "\n"
+
+        #Change text offset based on which quadrant the mouse is in
+        textXShift = 0
+        textYShift = 0
+
+        #Check if the text will go off the screen using the longest line of text
+
+        #Height of the font characters
+        fontSize = 16
+
+        #Offset from the mouse
+        textOffset = 10
+
+        #Positon for the text to be displayed
+        textPos = (mousePos[0] + textOffset, mousePos[1] + textOffset)
+
+        #show the text
+        getTextDisplay(text, textPos, "Arial", fontSize, pallette.darkgray, pallette.orange, 4, pallette.white, 10)
+
+
+
 
     #Show the center grid coordinate
     centerTile = windowPosToTile(width / 2, height / 2, xOffset, yOffset)
