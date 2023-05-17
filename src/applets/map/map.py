@@ -268,12 +268,11 @@ while running:
 
         text += "Waypoints:\n"
 
-        #Check for multiple waypoints
-        if len(mapTiles[mouseTile]) > 1:
-            for i in range(0, len(mapTiles[mouseTile])):
-                text += formatWaypoint(mapTiles[mouseTile][i][1]) + " ID: " + mapTiles[mouseTile][i][0].split("-")[2] + "\n"
-        else:
-            text += formatWaypoint(mapTiles[mouseTile][0][1]) + "\n"
+        for i in range(0, len(mapTiles[mouseTile])):
+            text += formatWaypoint(mapTiles[mouseTile][i][1])
+            if(mapTiles[mouseTile][i][1] in Constants.WaypointTypes):
+                text += " ID: " + mapTiles[mouseTile][i][0].split("-")[2]
+            text += "\n"
 
         #Change text offset based on which quadrant the mouse is in
         textXShift = 0
