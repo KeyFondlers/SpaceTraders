@@ -6,6 +6,8 @@ import math
 import json
 import sys
 
+import util.Constants as Constants
+
 def getTextboxSize(text, font, fontsize, padding):
     #Split text into lines
     lines = text.splitlines()
