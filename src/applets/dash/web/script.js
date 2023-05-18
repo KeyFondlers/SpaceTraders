@@ -4,4 +4,6 @@ document.querySelector("button").onclick = function () {
     eel.openMap()(function(){                      
 
     })
+
+    
   }

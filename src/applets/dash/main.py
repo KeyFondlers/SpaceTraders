@@ -9,6 +9,16 @@ eel.init("./src/applets/dash/web")
 def openMap():
     subprocess.run(['python', './src/applets/map/map.py', "0", "0"])
     return "Map opened"
-  
+
+@eel.expose
+def setFilter(filterData):
+
+    #Write filter data to file
+    with open("./src/data/filter.txt" , 'w') as file:
+        file.write(filterData)
+    
+    return "Filter set to " + filterData
+
+
 # Start the index.html file
 eel.start("index.html", size=(960, 480))

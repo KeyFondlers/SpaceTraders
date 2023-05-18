@@ -8,6 +8,12 @@ import sys
 
 import util.Constants as Constants
 
+#Set pygame logo
+pygame.display.set_icon(pygame.image.load("./src/data/images/KFCoLogo.png"))
+
+#Font
+font = "./src/data/fonts/CourierPrime-Bold.ttf"
+
 def getTextboxSize(text, font, fontsize, padding):
     #Split text into lines
     lines = text.splitlines()
@@ -91,7 +97,7 @@ def formatWaypoint(waypoint):
 mapData = {}
 
 #Import Map Data
-with open("./src/data/Map.json", "r") as read_file:
+with open("./src/data/Map/Map.json", "r") as read_file:
     mapData = json.load(read_file)
 
 # Initialize Pygame
@@ -100,11 +106,13 @@ pygame.init()
 #color pallete class
 class color:
     def __init__(self):
-        self.white = (255, 252, 242)
+        self.white = (207, 226, 243)
         self.lightgray = (204, 197, 185)
         self.darkgray = (64, 61, 57)
         self.black = (37, 36, 34)
-        self.orange = (235, 94, 40)
+        self.lightblue = (24, 144, 218)
+        self.lessdarkblue = (34, 34, 97)
+        self.darkblue = (23, 23, 66)
 
 pallette = color()
 
@@ -116,7 +124,7 @@ screen = pygame.display.set_mode((width, height))
 #Grid Size
 gridSize = 15
 
-pygame.display.set_caption("Universe Map")
+pygame.display.set_caption("KF Co. Universe Map")
 
 # Set up the clock
 clock = pygame.time.Clock()
@@ -126,6 +134,19 @@ mapTiles = {}
 
 def setTile(x, y, data):
     mapTiles[(x, y)] = data
+
+
+filteredWaypoints = []
+def filterWaypoint(x, y):
+
+    #If no waypoints are filtered, return true
+    if len(filteredWaypoints) == 0:
+        return True
+    searchResults = []
+    for waypoint in mapTiles[x,y]:
+        searchResults.append(waypoint[1] in filteredWaypoints)
+    if True in searchResults:
+        return True
 
 #Put all tiles in the map data into the mapTiles dictionary
 for system in mapData:
@@ -183,9 +204,35 @@ if(len(sys.argv) == 2):
             userYOffset = int(mapData[i]['y'])
             break
 
+tpInputDelay = 0
+
 # Set up the game loop
 running = True
 while running:
+
+    #Load Filter Data from map.filter
+    with open("./src/data/Map/io/map.filter", "r") as read_file:
+        filteredWaypoints = read_file.read().splitlines()
+
+    tpRequest = []
+    #Load TP Request Data from map.tp
+    with open("./src/data/Map/io/map.tp", "r") as read_file:
+        tpRequest = read_file.read().splitlines()
+
+    if len(tpRequest) == 2:
+
+        if(tpInputDelay > 30):
+            userXOffset = -int(tpRequest[0])
+            userYOffset = int(tpRequest[1])
+
+            #Clear map.tp
+            with open("./src/data/Map/io/map.tp", "w") as write_file:
+                write_file.write("")
+
+            tpRequest = []
+            tpInputDelay = 0
+        
+        tpInputDelay += 1
 
     #Offsets so 0,0 is the center of the screen at the beginning
     xOffset = ((width // gridSize) // 2) + int(userXOffset)
@@ -193,7 +240,6 @@ while running:
 
     visibleXRange = range(-xOffset, (width // gridSize) - xOffset)
     visibleYRange = range(yOffset - (height // gridSize), yOffset)
-
 
     # Handle events
     for event in pygame.event.get():
@@ -229,28 +275,31 @@ while running:
             
 
     # Draw to the screen
-    screen.fill(pallette.black)
+    screen.fill(pallette.darkblue)
     
     # Draw the grid
     for x in range(0, width, gridSize):
-        pygame.draw.line(screen, pallette.darkgray, (x, 0), (x, height))
+        pygame.draw.line(screen, pallette.lessdarkblue, (x, 0), (x, height))
 
     for y in range(0, height, gridSize):
-        pygame.draw.line(screen, pallette.darkgray, (0, y), (width, y))
+        pygame.draw.line(screen, pallette.lessdarkblue, (0, y), (width, y))
 
     #Draw visible tiles
     for x in visibleXRange:
         for y in visibleYRange:
             #check the dictionary for a defined tile
-            if (x, y) in mapTiles:
-                pygame.draw.rect(screen, pallette.orange, ((x + int(xOffset)) * gridSize, -(y - int(yOffset)) * gridSize, gridSize, gridSize))
+            if (x, y) in mapTiles and filterWaypoint(x,y):
+                pygame.draw.rect(screen, pallette.lightblue, ((x + int(xOffset)) * gridSize, -(y - int(yOffset)) * gridSize, gridSize, gridSize))
     
     #Show data of the tile the mouse is hovering over
     mousePos = pygame.mouse.get_pos()
     mouseTile = windowPosToTile(mousePos[0], mousePos[1], xOffset, yOffset)
 
+    #Height of the font characters
+    fontSize = 24
+
     #check if the mouse is hovering over a tile and display the info near the mouse
-    if mouseTile in mapTiles:
+    if mouseTile in mapTiles and filterWaypoint(mouseTile[0], mouseTile[1]):
         
         #Generate string to display
         text = ""
@@ -262,7 +311,7 @@ while running:
         sectorName = mapTiles[mouseTile][0][0].split("-")[0]
         text += "Sector: " + sectorName + "\n"
 
-        #Add the system name
+        #Add the system nameA
         systemName = mapTiles[mouseTile][0][0].split("-")[1]
         text += "System: " + systemName + "\n"
 
@@ -279,11 +328,6 @@ while running:
         textXShift = 0
         textYShift = 0
 
-        #Check if the text will go off the screen using the longest line of text
-
-        #Height of the font characters
-        fontSize = 16
-
         #Offset from the mouse
         textOffset = 10
 
@@ -291,15 +335,13 @@ while running:
         textPos = (mousePos[0] + textOffset, mousePos[1] + textOffset)
 
         #show the text
-        getTextDisplay(text, textPos, "Arial", fontSize, pallette.darkgray, pallette.orange, 4, pallette.white, 10)
+        getTextDisplay(text, textPos, font, fontSize, pallette.darkblue, pallette.lightblue, 4, pallette.white, 12)
 
+    # Scale Indicator
+    getTextDisplay("Scale: " + str(len(visibleXRange)) + " Units", (10, 10), font, fontSize, pallette.darkblue, pallette.lightblue, 4, pallette.white, 10)
 
-
-
-    #Show the center grid coordinate
-    centerTile = windowPosToTile(width / 2, height / 2, xOffset, yOffset)
-    centerTileDisplay = pygame.font.SysFont("Arial", 30).render(str(centerTile), True, pallette.white)
-    screen.blit(centerTileDisplay, (10, 10))
+    # Position Indicator under scale indicator
+    getTextDisplay("Position: (" + str(int(-userXOffset)) + ", " + str(int(userYOffset)) + ")", (10, 30 + fontSize), font, fontSize, pallette.darkblue, pallette.lightblue, 4, pallette.white, 10)
 
     # Flip the display
     pygame.display.flip()
