@@ -11,4 +11,4 @@ def openMap():
     return "Map opened"
   
 # Start the index.html file
-eel.start("index.html", size=(960, 480))
+eel.start("index.html", size=(1280, 720))

@@ -1,21 +1,33 @@
 :root{
-    --white: rgb(255, 252, 242);
     --lightgrey: rgb(204, 197, 185);
     --darkgrey: rgb(64, 61, 57);
     --black: rgb(37, 36, 34);
-    --orange: rgb(235, 94, 40);
+    --lightblue: rgb(24, 144, 218);
+    --lessdarkblue: rgb(34,34,97);
+    --darkblue: rgb(23, 23, 66);
 }
 
 
-h1{
-    color: var(--orange);
-    text-align: center;
+  .page_title{
+    color: var(--lightblue);
+    text-align: left;
+    margin-top: 0;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    text-shadow: 2px 2px 5px var(--black);
+    font-family: 'Courier Prime', monospace;
+    width: 50%;
+    background-color: white;
   }
-  .random_number{
-    margin: 50px;
-    font-size: 150px;
-    text-align: center;
+
+  .head_img{
+    width: 32px;
+    height: 35px;
+    text-align: right;
+
   }
+
+
   button{
     display: block;
     margin: 0 auto;
@@ -23,4 +35,24 @@ h1{
   
   body{
      background-color: var(--black); 
+     padding-top: 0;
+     padding-left: 0;
+     margin: 0;
+     margin-top: 0;
+     font-family: 'Courier Prime', monospace;
+  }
+
+  .header{
+    position: relative;
+    display: grid;
+    background-color: var(--darkgrey);
+    width: 100%;
+    padding-top: 0;
+    margin-top: 0;
+    padding-left: 0;
+
+  }
+
+  .dash_button {
+    position: relative;
   }
