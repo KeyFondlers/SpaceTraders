@@ -4,7 +4,7 @@ import time
 import json
 from tqdm import tqdm
 
-dataPath = "./src/data/"
+dataPath = "./src/data/Map/"
 
 #Read token from file
 tokenPath = os.path.join(dataPath, "TOKEN")
@@ -12,7 +12,7 @@ token = ""
 with open(tokenPath, 'r') as file:
     token = file.read()
 
-TOTAL_SYSTEMS = 7000;
+TOTAL_SYSTEMS = 9000;
 PAGE_LIMIT = 20;
 RATE_LIMIT = 0.55; #Delay after request
 
@@ -42,5 +42,5 @@ def mergeMapData():
     with open(os.path.join(dataPath,"Map.json"), 'w') as outfile:
         json.dump(data, outfile, indent=4)
 
-#pullMapData();
+pullMapData();
 mergeMapData();
