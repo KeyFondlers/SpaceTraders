@@ -1,6 +1,8 @@
 import os
 import requests
 import json
+import numpy as np
+import time
 
 dataPath = "./src/data/"
 
@@ -14,14 +16,34 @@ def getSystemData(systemID):
     headers = {
         'Authorization': ('Bearer ' + token),
     }
-    response = requests.get('https://api.spacetraders.io/v2/systems/' + str(systemID) + "/waypoints", headers=headers)
 
-    return response;
+    data = []
+
+    #Get the first page of data
+    response = requests.get('https://api.spacetraders.io/v2/systems/' + str(systemID) + "/waypoints", headers=headers)
+    data.append(response.json()["data"])
+    time.sleep(0.51);
+    
+    #Get the total data count
+    dataCount = response.json()["meta"]["total"]
+    limit = response.json()["meta"]["limit"]
+
+    #Count the number of pages
+    pages = int(np.ceil(dataCount / limit))
+
+    #Get the data from the remaining pages
+    for i in range(2, pages + 1):
+        response = requests.get('https://api.spacetraders.io/v2/systems/' + str(systemID) + "/waypoints?page=" + str(i), headers=headers)
+        data.append(response.json()["data"])
+        time.sleep(0.51);
+
+    return data;
 
 #Write system data to file
 def writeSystemData(systemID):
     data = getSystemData(systemID)
-    with open(os.path.join(dataPath,"RawSystemData/System") + str(systemID) + ".json" , 'w') as file:
-        json.dump(data.json(), file, indent=4)
+    with open(os.path.join(dataPath,"Map/RawSystemData/") + str(systemID) + ".json" , 'w') as file:
+        json.dump(data, file, indent=4)
 
-writeSystemData("X1-NN19")
+
+writeSystemData("X1-TZ19");

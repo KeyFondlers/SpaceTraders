@@ -8,6 +8,8 @@ import sys
 
 import util.Constants as Constants
 
+from PlanetLookup import writeSystemData
+
 #Set pygame logo
 pygame.display.set_icon(pygame.image.load("./src/data/images/KFCoLogo.png"))
 
@@ -206,6 +208,8 @@ if(len(sys.argv) == 2):
 
 tpInputDelay = 0
 
+clickLock = False
+
 # Set up the game loop
 running = True
 while running:
@@ -221,7 +225,7 @@ while running:
 
     if len(tpRequest) == 2:
 
-        if(tpInputDelay > 30):
+        if(tpInputDelay > 0):
             userXOffset = -int(tpRequest[0])
             userYOffset = int(tpRequest[1])
 
@@ -335,6 +339,28 @@ while running:
 
         #show the text
         getTextDisplay(text, textPos, font, fontSize, pallette.darkblue, pallette.lightblue, 4, pallette.white, 12)
+
+    #Detect clickign on a tile
+    if pygame.mouse.get_pressed()[0] == 1:
+        if mouseTile in mapTiles and filterWaypoint(mouseTile[0], mouseTile[1]):
+            if not clickLock:
+
+                clickedSystem = mapTiles[mouseTile][0][0].split("-")[0] + "-" + mapTiles[mouseTile][0][0].split("-")[1]
+                print("Clicked on system: " + clickedSystem)
+
+                #Save the system date to a file if the tile is at the center of the screen
+                if(mouseTile[0] == int(-userXOffset) and mouseTile[1] == int(userYOffset)):
+                    print("Saving system data to file")
+                    writeSystemData(clickedSystem)
+
+                #Move the camera to the clicked tile by writing to the tp file
+                with open("./src/data/Map/io/map.tp", "w") as write_file:
+                    write_file.write(str(mouseTile[0]) + "\n")
+                    write_file.write(str(mouseTile[1]))
+
+                clickLock = True
+    if pygame.mouse.get_pressed()[0] == 0:
+        clickLock = False
 
     # Scale Indicator
     getTextDisplay("Scale: " + str(len(visibleXRange)) + " Units", (10, 10), font, fontSize, pallette.darkblue, pallette.lightblue, 4, pallette.white, 10)
