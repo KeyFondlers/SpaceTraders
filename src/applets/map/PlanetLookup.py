@@ -44,6 +44,3 @@ def writeSystemData(systemID):
     data = getSystemData(systemID)
     with open(os.path.join(dataPath,"Map/RawSystemData/") + str(systemID) + ".json" , 'w') as file:
         json.dump(data, file, indent=4)
-
-
-writeSystemData("X1-TZ19");
